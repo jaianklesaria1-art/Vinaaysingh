@@ -1,0 +1,4 @@
+# Netlify: the website lives in the site/ folder; no build step needed
+[build]
+  publish = "site"
+  command = ""
