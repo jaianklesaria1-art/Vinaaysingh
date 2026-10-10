@@ -1349,3 +1349,8 @@ img.garment.photo { width: 100%; height: auto; aspect-ratio: 1600 / 1760; object
 .spec-list > div:last-child { border-bottom: 1px solid #E3DDD3; }
 .spec-list b { font-family: var(--display); font-weight: 400; font-size: 20px; min-width: 70px; }
 .spec-list span { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--muted); }
+/* categories: the big number sits at the top of the card, clear of the garment */
+.cats-frame .ghost { inset: 4% 0 auto 0; color: rgba(0,0,0,.09); z-index: 0; }
+@media (max-width: 960px) { .cats-frame .ghost { font-size: 110px; } }
+.cats-frame .ghost { inset: 1.5% 0 auto 0; font-size: 118px; }
+@media (max-width: 960px) { .cats-frame .ghost { font-size: 90px; } }
