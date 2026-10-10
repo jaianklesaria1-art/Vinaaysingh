@@ -75,11 +75,13 @@
       <a href="index.html">${logo}</a>
       <nav id="site-nav" aria-label="Main">
         <a href="index.html#collection">Shop</a>
-        <a href="product.html?p=supercharge-power-boy-tee">Supercharge</a>
         <a href="index.html#fit">Build a fit</a>
       </nav>
       <div class="head-right">
         <span class="progress" aria-hidden="true">(0%)</span>
+        <button class="icon-btn search-btn" type="button" data-open-search aria-label="Search">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
         <button class="bag-btn" type="button" data-open-bag aria-label="Open bag">Bag <span class="bag-count">0</span></button>
         <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-controls="site-nav" aria-expanded="false">
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 6h14M2 12h14" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -113,7 +115,17 @@
         <div class="drawer-foot"></div>
       </aside>
       <div class="modal" role="dialog" aria-modal="true" aria-label="Information"><div class="modal-card"></div></div>
-      <div class="toast" role="status" aria-live="polite"></div>`);
+      <div class="toast" role="status" aria-live="polite"></div>
+      <div class="search" role="dialog" aria-modal="true" aria-label="Search" hidden>
+        <div class="search-panel">
+          <form class="search-form" role="search"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="search" name="q" placeholder="Search tees, shirts, pants, jackets, colours" autocomplete="off" aria-label="Search the shop" aria-controls="search-results">
+            <button class="icon-btn" type="button" data-close-search aria-label="Close search"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6"/></svg></button></form>
+          <div class="search-results" id="search-results" aria-live="polite"></div>
+        </div>
+      </div>`);
+    initAnnouncements();
+    initSearch();
 
     document.addEventListener("click", (e) => {
       if (e.target.closest("[data-open-bag]")) { renderBag(); openDrawer(); }
@@ -129,12 +141,60 @@
       footer.className = "site-footer";
       footer.innerHTML = `
         <div><a href="index.html">${logo}</a><p class="muted" style="margin-top:12px;max-width:320px">Nothing is original. Inspired by you.</p></div>
-        <div><h4>Shop</h4><ul><li><a href="index.html#collection">All pieces</a></li><li><a href="product.html?p=supercharge-power-boy-tee">Supercharge tee</a></li></ul></div>
-        <div><h4>Help</h4><ul><li><a href="track.html">Track your order</a></li><li>Delivery</li><li>Returns</li><li>Size guide</li></ul></div>
+        <div><h4>Shop</h4><ul><li><a href="index.html#collection">All pieces</a></li><li><a href="index.html#lookbook">Lookbook</a></li><li><a href="index.html#fit">Build a fit</a></li></ul></div>
+        <div><h4>Help</h4><ul><li><a href="track.html">Track your order</a></li><li><a href="shipping.html">Shipping</a></li><li><a href="returns.html">Returns &amp; refunds</a></li><li><a href="index.html#faq">FAQ</a></li></ul></div>
+        <div><h4>About</h4><ul><li><a href="contact.html">Contact us</a></li><li><a href="privacy.html">Privacy policy</a></li><li><a href="terms.html">Terms of use</a></li></ul></div>
         <div><h4>Social</h4><ul><li>Instagram</li><li>WhatsApp</li></ul></div>
         <p class="proto-note">Prototype. Products, prices and policies are samples, and product photos are AI-generated stand-ins until the real collection is shot. No payment is taken.</p>`;
       document.body.appendChild(footer);
     }
+  }
+
+  /* ---------- announcement bar ---------- */
+  function initAnnouncements() {
+    const msgs = (D.announcements || []).filter(Boolean);
+    if (!msgs.length) return;
+    const bar = document.createElement("div");
+    bar.className = "announce"; bar.setAttribute("role", "region"); bar.setAttribute("aria-label", "Announcements");
+    bar.innerHTML = `<div class="announce-track">${msgs.map((m, i) => `<p class="${i === 0 ? "on" : ""}">${esc(m)}</p>`).join("")}</div>`;
+    document.body.prepend(bar);
+    document.body.classList.add("has-announce");
+    let i = 0;
+    const items = $$("p", bar);
+    if (items.length > 1 && !reduceMotion) setInterval(() => {
+      if (document.hidden) return;
+      items[i].classList.remove("on"); i = (i + 1) % items.length; items[i].classList.add("on");
+    }, 4000);
+    const onScroll = () => document.body.classList.toggle("announce-hidden", window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  }
+
+  /* ---------- search ---------- */
+  function initSearch() {
+    const box = $(".search"), input = $(".search-form input"), out = $("#search-results");
+    let lastFocus = null;
+    const haystack = (p) => [p.name, p.category, p.type, p.tagline, ...p.colors.map((c) => c.name)].join(" ").toLowerCase();
+    const open = () => { lastFocus = document.activeElement; box.hidden = false; requestAnimationFrame(() => box.classList.add("open")); document.body.style.overflow = "hidden"; input.value = ""; paint(""); setTimeout(() => input.focus(), 60); };
+    const close = () => { box.classList.remove("open"); document.body.style.overflow = ""; setTimeout(() => { box.hidden = true; }, 250); if (lastFocus) lastFocus.focus(); };
+    const paint = (q) => {
+      q = q.trim().toLowerCase();
+      const words = q.split(/\s+/).filter(Boolean);
+      const list = words.length ? D.products.filter((p) => words.every((w) => haystack(p).includes(w.replace(/s$/, "")))) : D.products;
+      if (!list.length) { out.innerHTML = `<p class="search-empty">Nothing matches “${esc(q)}”. Try tee, shirt, pants, jacket or a colour like black.</p>`; return; }
+      out.innerHTML = `<p class="search-count">${words.length ? `${list.length} ${list.length === 1 ? "piece" : "pieces"}` : "All pieces"}</p>
+        <ul>${list.map((p) => `<li><a href="product.html?p=${p.slug}"><span class="sr-img" style="--tone:${tone(p)}">${art(p)}</span>
+          <span class="sr-name">${esc(p.name)}<small>${esc(p.category)} · ${p.colors.map((c) => esc(c.name)).join(", ")}</small></span><span class="sr-price">${fmt(p.price)}</span></a></li>`).join("")}</ul>`;
+    };
+    input.addEventListener("input", () => paint(input.value));
+    $(".search-form").addEventListener("submit", (e) => { e.preventDefault(); const first = $("a", out); if (first) location.href = first.getAttribute("href"); });
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("[data-open-search]")) open();
+      if (e.target.closest("[data-close-search]") || e.target === box) close();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !box.hidden) close();
+      if (e.key === "/" && box.hidden && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); open(); }
+    });
   }
 
   function updateCount(bump) {
@@ -658,31 +718,34 @@
 
   /* click a product: the card's picture flies into the product page's starting window, then we navigate */
   function flyToProduct(card, href) {
-    const still = $(".still > .garment", card), stageEl = $(".pcard-stage", card);
-    if (!still || !stageEl) return false;
-    const p = bySlug(card.dataset.slug), vw = window.innerWidth, vh = window.innerHeight;
-    const sr = stageEl.getBoundingClientRect(), fr = still.getBoundingClientRect();
+    const still = $(".still > .garment", card);
+    if (!still) return false;
+    const vw = window.innerWidth, vh = window.innerHeight, fr = still.getBoundingClientRect();
+    // where the product page draws the garment (mirrors the .pdp2-stage grid)
+    const gutter = Math.min(40, Math.max(16, vw * 0.03));
+    let w, cx, cy;
+    if (vw > 960) {
+      const col = vw - gutter * 2 - 250 - 320 - 48, avail = vh - 118;
+      w = Math.min(col, 520, avail / 1.1); cx = gutter + 250 + 24 + col / 2; cy = 90 + avail / 2;
+    } else {
+      const box = vh * 0.64; w = Math.min((vw - gutter * 2) * 0.7, box / 1.1); cx = vw / 2; cy = 80 + box / 2;
+    }
+    let h = w * 1.1;
+    // on desktop the product page opens on the close-up (scale 2.3, shifted down 44%), so land there
+    if (!reduceMotion) { cy += h * 0.44; w *= 2.3; h *= 2.3; }
     const fly = document.createElement("div");
-    fly.className = "sx-fly"; fly.setAttribute("aria-hidden", "true");
-    fly.style.setProperty("--tone", tone(p));
-    fly.innerHTML = `<div class="sx-frame"><div class="sx-media sx-scene"><span class="sx-ghost">${esc(p.category)}</span><div class="sx-photo">${still.outerHTML}</div></div></div>`;
+    fly.className = "pdp-fly"; fly.setAttribute("aria-hidden", "true");
+    fly.innerHTML = `<div class="pdp-fly-bg"></div><div class="pdp-fly-garment" style="left:${cx - w / 2}px;top:${cy - h / 2}px;width:${w}px;height:${h}px">${still.outerHTML.replace(' loading="lazy"', "")}</div>`;
     document.body.appendChild(fly);
-    const fFrame = $(".sx-frame", fly), fMedia = $(".sx-media", fly), fImg = $(".sx-photo > *", fly);
-    fMedia.style.transform = `scale(${SX.mediaZoom})`;
-    const st = sxStart(), ix = vw * (100 - st.w) / 200, iy = vh * (100 - st.h) / 200;
-    const from = `inset(${sr.top}px ${vw - sr.right}px ${vh - sr.bottom}px ${sr.left}px round 22px)`;
-    const to = `inset(${iy}px ${ix}px ${iy}px ${ix}px round ${SX.startRadius}px)`;
-    const end = fImg.getBoundingClientRect();
-    const dx = (fr.left + fr.width / 2 - (end.left + end.width / 2)) / SX.mediaZoom;
-    const dy = (fr.top + fr.height / 2 - (end.top + end.height / 2)) / SX.mediaZoom;
-    const sc = fr.width / end.width;
-    const timing = { duration: 720, easing: "cubic-bezier(.7,0,.2,1)", fill: "forwards" };
-    fFrame.animate([{ clipPath: from }, { clipPath: to }], timing);
-    fImg.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sc})` }, { transform: "none" }], timing);
-    $(".sx-ghost", fly).animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 250, fill: "forwards" });
-    setTimeout(() => { try { sessionStorage.setItem("sx-from-card", "1"); } catch (e) {} location.href = href; }, 760);
+    const g = $(".pdp-fly-garment", fly);
+    const dx = fr.left + fr.width / 2 - cx, dy = fr.top + fr.height / 2 - cy, sc = fr.width / w;
+    const timing = { duration: 700, easing: "cubic-bezier(.7,0,.2,1)", fill: "forwards" };
+    $(".pdp-fly-bg", fly).animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, delay: 120, fill: "forwards" });
+    g.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sc})` }, { transform: "none" }], timing);
+    setTimeout(() => { try { sessionStorage.setItem("sx-from-card", "1"); } catch (e) {} location.href = href; }, 740);
     return true;
   }
+
   function initFly(root) {
     if (!root || reduceMotion || !("animate" in Element.prototype)) return;
     root.addEventListener("click", (e) => {
@@ -692,7 +755,7 @@
     });
   }
   // coming back with the browser's back button: drop any leftover fly layer
-  window.addEventListener("pageshow", () => $$(".sx-fly").forEach((n) => n.remove()));
+  window.addEventListener("pageshow", () => $$(".sx-fly, .pdp-fly").forEach((n) => n.remove()));
 
   function initReveal() {
     const els = $$(".reveal");
@@ -711,12 +774,9 @@
   function initHome() {
     const hero = bySlug("supercharge-power-boy-tee");
     $("#hero-figure").innerHTML = art(hero, hero.colors[0]).replace(' loading="lazy"', ' fetchpriority="high"');
-    cloth($("#hero-figure"), { strength: 1.2, res: 1.35, opacity: 0.8, glow: 0.35 });
-    // the scene is translucent smoke: a dense layer behind the tee, a thin veil drifting in front
-    if (window.UNOSmoke) {
-      UNOSmoke.mount($(".sx-hero .sx-smoke.back"), { alpha: 1, scale: 2.2, deep: "#7A1216" });
-      UNOSmoke.mount($(".sx-hero .sx-smoke.front"), { alpha: 0.38, scale: 1.7, speed: 1.4, color: "#F1C9C5", deep: "#D7262B" });
-    }
+    cloth($("#hero-figure"), { strength: 1.2, res: 1.35 });
+    // callouts live on the tee itself, so they point at the right spot on any screen and move with it
+    if ($(".sx-callouts")) $("#hero-figure").appendChild($(".sx-callouts"));
     $("#chip-1").innerHTML = art(bySlug("remix-tee"));
     fillMarquee($("#marquee-1"), ["unorgnl.", "Nothing is original. Inspired by you.", "first run only", "supercharge power boy"]);
     fillMarquee($("#marquee-2"), ["unorgnl.", "unorgnl.", "unorgnl."]);
@@ -745,6 +805,11 @@
 
     initFit();
     initReviews();
+    initLookbook();
+    initUgc();
+    initFaq();
+    initHeroExtras();
+    initRunway();
 
     // collection (HUNTER) + filters
     $("#grid").innerHTML = D.products.map(cardHTML).join("");
@@ -758,12 +823,120 @@
     $("#filters").addEventListener("click", (e) => { const b = e.target.closest("[data-filter]"); if (b) setFilter(b.dataset.filter); });
 
     initFly($("#grid"));
-    scrollExpand($(".sx-hero"), { overlayScrim: 0.75, focusBlur: reduceMotion ? 0 : 14 });
+    scrollExpand($(".sx-hero"), { holdDistance: reduceMotion ? 0.35 : 0.35 + 0.15 + RUNWAY_LEN + 0.2 });
 
     if (!hasGsap || !window.ScrollTrigger || reduceMotion) return;
     // intro: the window and title arrive, then scroll takes over
     gsap.from(".sx-hero .sx-frame", { scale: 0.86, opacity: 0, duration: 1.3, ease: "expo.out" });
     gsap.from(".sx-hero .sx-title", { y: 60, filter: "blur(12px)", duration: 1.2, ease: "expo.out", delay: 0.1, clearProps: "filter" });
+  }
+
+  /* ---------- Lookbook: looks built from the collection; tapping one loads it in the fitting room ---------- */
+  const LOOKS = [
+    { name: "Fully charged", top: "supercharge-power-boy-tee", bottom: "second-draft-cargo", note: "Print up top, utility below." },
+    { name: "Red alert", top: "copy-bomber", bottom: "rerun-trouser", note: "The bomber does the talking." },
+    { name: "Second take", top: "ditto-overshirt", bottom: "second-draft-cargo", note: "Tonal, layered, easy." },
+    { name: "Off duty", top: "carbon-copy-shirt", bottom: "rerun-trouser", note: "Camp collar, clean taper." },
+  ];
+  function initLookbook() {
+    const grid = $("#lb-grid"); if (!grid) return;
+    grid.innerHTML = LOOKS.map((l, i) => {
+      const t = bySlug(l.top), b = bySlug(l.bottom);
+      return `<article class="lb-look lb-${i + 1}" style="--tone:${tone(t)}">
+        <div class="lb-stage"><span class="lb-no" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
+          <div class="lb-outfit"><span class="lb-top">${art(t)}</span><span class="lb-bottom">${art(b)}</span></div></div>
+        <div class="lb-info"><h3>${esc(l.name)}</h3><p>${esc(l.note)}</p>
+          <p class="lb-pieces"><a href="product.html?p=${t.slug}">${esc(t.name)}</a> + <a href="product.html?p=${b.slug}">${esc(b.name)}</a> · ${fmt(t.price + b.price)}</p>
+          <button class="btn btn-ink" type="button" data-try-look="${i}">Try this look</button></div>
+      </article>`;
+    }).join("");
+    grid.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-try-look]"); if (!btn) return;
+      const l = LOOKS[+btn.dataset.tryLook];
+      document.dispatchEvent(new CustomEvent("fit:set", { detail: { top: l.top, bottom: l.bottom } }));
+      $("#fit").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    });
+  }
+
+  /* ---------- Your fits: real customer posts, or invitation tiles until there are some ---------- */
+  function initUgc() {
+    const grid = $("#ugc-grid"); if (!grid) return;
+    const posts = (D.ugc || []).filter((u) => u && u.image);
+    const tiles = posts.length ? posts.slice(0, 8).map((u) => { const p = bySlug(u.slug);
+      return `<a class="ugc-tile" href="${p ? "product.html?p=" + p.slug : "#collection"}"><img src="${esc(u.image)}" alt="${esc(u.handle || "Customer")} wearing ${p ? esc(p.name) : "unorgnl."}" loading="lazy"><span>${esc(u.handle || "")}${p ? ` · ${esc(p.name)}` : ""}</span></a>`; })
+      : Array.from({ length: 6 }, (_, i) => i === 0
+        ? `<div class="ugc-tile ugc-cta"><b>Your fit here</b><p>Post a photo in your piece and tag us on Instagram. We'll ask before we share it.</p></div>`
+        : `<div class="ugc-tile ugc-empty" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="6" y="12" width="36" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="25" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17 12l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>`);
+    grid.innerHTML = tiles.join("");
+  }
+
+  /* ---------- FAQ ---------- */
+  function initFaq() {
+    const list = $("#faq-list"); if (!list) return;
+    list.innerHTML = (D.faq || []).map(([q, a]) => `<details class="faq-item"><summary><span>${esc(q)}</span><i aria-hidden="true"></i></summary><p>${esc(a)}</p></details>`).join("");
+  }
+
+  /* ---------- hero: callouts, badge, drifting wordmark, a little mouse parallax ---------- */
+  function initHeroExtras() {
+    const hero = $(".sx-hero"), scene = $(".sx-hero .sx-scene"); if (!hero || reduceMotion) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    let raf = 0, tx = 0, ty = 0, x = 0, y = 0;
+    const loop = () => { x += (tx - x) * 0.08; y += (ty - y) * 0.08; scene.style.setProperty("--px", x.toFixed(3)); scene.style.setProperty("--py", y.toFixed(3)); raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.001 ? requestAnimationFrame(loop) : 0; };
+    hero.addEventListener("pointermove", (e) => { tx = e.clientX / innerWidth - 0.5; ty = e.clientY / innerHeight - 0.5; if (!raf) raf = requestAnimationFrame(loop); });
+    hero.addEventListener("pointerleave", () => { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(loop); });
+  }
+
+  /* ---------- hero runway, driven by scroll: once the hero is fully open, the tee steps off,
+     then three models walk on one after another as you scroll, then the page moves on ---------- */
+  const RUNWAY_LEN = 4.8;                       // extra screen-heights of scroll the hero holds for the show
+  function initRunway() {
+    const hero = $(".sx-hero"), runway = $(".runway"), model = $(".runway .model"), tag = $(".runway-tag"), figure = $("#hero-figure");
+    if (!hero || !runway || reduceMotion) return;
+    const order = [1, 2, 3];                    // Red alert, Second take, Off duty
+    const ease = (t) => t * t * (3 - 2 * t);
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    let dressed = -1, target = 0, current = 0, raf = 0;
+    const dress = (n) => {
+      if (n === dressed) return; dressed = n;
+      const look = LOOKS[order[n]], t = bySlug(look.top), b = bySlug(look.bottom);
+      $(".m-top", model).innerHTML = art(t).replace(' loading="lazy"', ""); $(".m-bottom", model).innerHTML = art(b).replace(' loading="lazy"', "");
+      $("b", tag).innerHTML = `${esc(look.name)}<small>${esc(t.name)} + ${esc(b.name)} · ${fmt(t.price + b.price)}</small>`;
+    };
+    // preload every look so nothing pops in mid-walk
+    order.forEach((n) => { [LOOKS[n].top, LOOKS[n].bottom].forEach((slug) => { const m = (bySlug(slug).media || {}).front; if (m) { const im = new Image(); im.src = m; } }); });
+    const progress = () => {
+      const vh = window.innerHeight, scrolled = -hero.getBoundingClientRect().top;
+      return clamp01((scrolled - vh * (SX.scrollDistance + 0.15)) / (vh * RUNWAY_LEN));
+    };
+    const paint = (r) => {
+      const vw = window.innerWidth, off = vw * 0.75;
+      // 0 - 0.12: the hero tee steps off to the left
+      const teeOut = ease(clamp01(r / 0.12));
+      figure.style.transform = teeOut > 0 ? `translateX(${(-off * teeOut).toFixed(1)}px)` : "";
+      hero.classList.toggle("runway-on", r > 0.001);
+      // 0.12 - 1: three looks, each walks in (38%), poses (24%), walks out (38%)
+      const rr = (r - 0.12) / 0.88;
+      if (rr <= 0) { model.style.transform = `translateX(${off}px)`; runway.classList.remove("tag-on"); model.classList.remove("posing"); return; }
+      const n = Math.min(order.length - 1, Math.floor(rr * order.length)), s = rr * order.length - n;
+      dress(n);
+      let x, moving = true;
+      if (s < 0.38) x = off * (1 - ease(s / 0.38));
+      else if (s < 0.62) { x = 0; moving = false; }
+      else x = -off * ease((s - 0.62) / 0.38);
+      if (rr >= 1) x = -off;
+      model.style.transform = `translateX(${x.toFixed(1)}px)`;
+      // the stride follows the distance walked, so stopping the scroll stops the step
+      const sw = moving ? Math.sin(x / 48) * 8 : 0;
+      model.style.setProperty("--sw", sw.toFixed(2));
+      model.style.setProperty("--bob", moving ? (Math.abs(Math.sin(x / 48)) * -1.2).toFixed(2) + "%" : "0%");
+      model.classList.toggle("posing", !moving);
+      runway.classList.toggle("tag-on", !moving);
+    };
+    const loop = () => { current += (target - current) * 0.09; if (Math.abs(target - current) < 0.0005) current = target; paint(current); raf = current === target ? 0 : requestAnimationFrame(loop); };
+    const kick = () => { target = progress(); if (!raf) raf = requestAnimationFrame(loop); };
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", kick);
+    target = current = progress(); paint(current);
   }
 
   /* ---------- Build your fit: rails, a mirror you can turn, a swing tag ---------- */
@@ -800,6 +973,12 @@
       $("#fit-error").textContent = "";
     };
     paintSlot("top"); paintSlot("bottom");
+    document.addEventListener("fit:set", (e) => {
+      ["top", "bottom"].forEach((slot) => {
+        const i = pools[slot].findIndex((p) => p.slug === e.detail[slot]);
+        if (i >= 0 && i !== st[slot]) { const dir = i > st[slot] ? 1 : -1; st[slot] = i; paintSlot(slot, dir); }
+      });
+    });
 
     $("#fit").addEventListener("click", (e) => {
       const chip = e.target.closest(".fit-chip");
@@ -891,27 +1070,29 @@
 
   /* ---------- PRODUCT (W-store scroll journey) ---------- */
   function initProduct() {
+    // always open at the top of a product page, so the close-up is the first thing you see (Chrome restores the old position after load)
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    const toTop = () => window.scrollTo(0, 0);
+    toTop(); window.addEventListener("load", () => setTimeout(toTop, 0), { once: true });
+    window.addEventListener("pageshow", (e) => { if (e.persisted) toTop(); });
     const p = bySlug(new URLSearchParams(location.search).get("p")) || D.products[0];
     document.title = p.name + " · unorgnl.";
     const sizes = D.sizes[p.type] || ["One size"];
     let color = p.colors[0].name;
     let size = sizes.length === 1 ? sizes[0] : null;
 
-    // ScrollExpand intro
-    const intro = $("#pdp-intro");
-    intro.style.setProperty("--tone", tone(p));
-    $("#sx-photo").innerHTML = art(p).replace(' loading="lazy"', ' fetchpriority="high"');
-    cloth($("#sx-photo"), { strength: 1.1, res: 1.35 });
-    $("#sx-ghost").textContent = p.category;
-    $("#sx-title").textContent = p.name;
-    $("#sx-cat").textContent = `[${p.category}] // first run`;
-    $("#sx-tagline").textContent = p.tagline;
-    $("#sx-price").textContent = fmt(p.price);
+    // on model: shoot photos when they exist, honest placeholders until then
+    const om = (p.media && p.media.model) || [];
+    $("#om-grid").innerHTML = om.length
+      ? om.map((src, i) => `<figure class="om-shot"><img src="${esc(src)}" alt="${esc(p.name)} worn by a model, photo ${i + 1}" loading="lazy"></figure>`).join("")
+      : [1, 2, 3].map((n) => `<figure class="om-shot om-empty" style="--tone:${tone(p)}"><svg viewBox="0 0 60 120" aria-hidden="true"><circle cx="30" cy="14" r="9"/><path d="M14 34c4-6 28-6 32 0l6 40h-9l-3 42h-8l-2-36-2 36h-8l-3-42h-9z"/></svg><figcaption>Shot ${n}</figcaption></figure>`).join("");
+    $("#om-note").textContent = om.length ? `Model wears size M.` : `On-model photos arrive with the photoshoot.`;
+
+    // arriving from a product card: the garment has already flown into place, so no entrance animation
     let fromCard = false;
     try { fromCard = sessionStorage.getItem("sx-from-card") === "1"; sessionStorage.removeItem("sx-from-card"); } catch (e) {}
-    scrollExpand(intro);
-    if (!fromCard && hasGsap && !reduceMotion) gsap.from("#pdp-intro .sx-frame", { scale: 0.86, opacity: 0, duration: 1.2, ease: "expo.out" });
-    if (hasGsap && !reduceMotion) gsap.from("#pdp-intro .sx-title", { y: 40, opacity: 0, duration: 1, ease: "expo.out", delay: fromCard ? 0 : 0.15 });
+    // fade the garment in without touching the rig transform (the scroll timeline owns the zoom)
+    if (!fromCard && hasGsap && !reduceMotion) gsap.from(".pdp2-canvas", { opacity: 0, duration: 0.9, ease: "power2.out", delay: 0.05 });
 
     $("#pdp-name").textContent = p.name;
     $("#crumb-name").textContent = p.name;
@@ -925,8 +1106,8 @@
       const c = p.colors.find((x) => x.name === color);
       $("#layer-front").innerHTML = art(p, c);
       $("#layer-back").innerHTML = art(p, c, { back: true, label: p.name + " back view" });
-      cloth($("#layer-front"), { strength: 0.7, res: 2 });
-      cloth($("#layer-back"), { strength: 0.7, res: 2 });
+      cloth($("#layer-front"), { strength: 0.7, res: 2, interactive: true, area: $(".pdp2-canvas") });
+      cloth($("#layer-back"), { strength: 0.7, res: 2, interactive: true, area: $(".pdp2-canvas") });
       $("#color-name").textContent = c.name;
     };
     $("#swatches").innerHTML = p.colors.map((c) => `<button class="swatch" type="button" style="background:${c.hex}" aria-label="${esc(c.name)}" aria-pressed="${c.name === color}" data-color="${esc(c.name)}"></button>`).join("");
@@ -968,16 +1149,15 @@
 
     // views: 01 collar close-up -> 02 full front -> 03 turn to back -> 04 detail
     const VIEWS = [
-      { key: "Collar", scale: 2.3, x: 0, y: 44, back: false },
+      { key: "Close-up", scale: 2.3, x: 0, y: 44, back: false },
       { key: "Front", scale: 1, x: 0, y: 0, back: false },
       { key: "Back", scale: 1, x: 0, y: 0, back: true },
-      { key: "Detail", scale: 2.1, x: 8, y: -34, back: false },
     ];
     const pills = $("#views");
     pills.innerHTML = VIEWS.map((v, i) => `<button class="pill" type="button" data-view="${i}" aria-pressed="false">0${i + 1} ${v.key}</button>`).join("");
     const mark = (i) => $$("[data-view]", pills).forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.view === i)));
     const rig = $("#rig"), front = $("#layer-front"), back = $("#layer-back");
-    let current = isSmall() || reduceMotion ? 1 : 0;
+    let current = reduceMotion ? 1 : 0;
 
     function setInstant(v) {
       rig.style.transform = `translate(${v.x}%, ${v.y}%) scale(${v.scale})`;
@@ -1001,21 +1181,20 @@
     if (scrollMode) {
       gsap.set(rig, { scale: VIEWS[0].scale, xPercent: VIEWS[0].x, yPercent: VIEWS[0].y });
       const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+      // close-up (held) -> zooms out to the front (held) -> flips to the back (held)
       tl.addLabel("v0", 0)
+        .to({}, { duration: 0.35 })
         .to(rig, { scale: 1, xPercent: 0, yPercent: 0, duration: 1 }).addLabel("v1")
-        .to({}, { duration: 0.4 })
+        .to({}, { duration: 0.45 })
         .to(rig, { scaleX: 0.04, duration: 0.45, ease: "power2.in" })
         .set(front, { opacity: 0 }).set(back, { opacity: 1 })
         .to(rig, { scaleX: 1, duration: 0.55, ease: "power2.out" }).addLabel("v2")
-        .to({}, { duration: 0.4 })
-        .set(front, { opacity: 1 }).set(back, { opacity: 0 })
-        .to(rig, { scale: VIEWS[3].scale, xPercent: VIEWS[3].x, yPercent: VIEWS[3].y, duration: 1 }).addLabel("v3")
-        .to({}, { duration: 0.3 });
+        .to({}, { duration: 0.45 });
       const st = ScrollTrigger.create({
         trigger: "#pdp2", start: "top top", end: "bottom bottom", scrub: 0.8, animation: tl,
         onUpdate: (self) => {
           const t = self.progress * tl.duration();
-          const idx = [0, 1, 2, 3].reduce((best, i) => (Math.abs(tl.labels["v" + i] - t) < Math.abs(tl.labels["v" + best] - t) ? i : best), 0);
+          const idx = [0, 1, 2].reduce((best, i) => (Math.abs(tl.labels["v" + i] - t) < Math.abs(tl.labels["v" + best] - t) ? i : best), 0);
           mark(idx);
         },
       });

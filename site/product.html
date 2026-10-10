@@ -7,33 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site.css?v=20261010221625">
+<link rel="stylesheet" href="css/site.css?v=20261010231930">
 </head>
 <body data-page="product">
 <main>
   <!-- W-store style: scrolling travels around the product while details and buy panel stay put -->
-  <!-- ScrollExpand intro: the product you clicked opens to full bleed -->
-  <section class="sx sx-pdp" data-sx id="pdp-intro" aria-label="Product intro">
-    <div class="sx-stage">
-      <div class="sx-frame">
-        <div class="sx-media sx-scene"><span class="sx-ghost" aria-hidden="true" id="sx-ghost"></span><div class="sx-photo" id="sx-photo"></div></div>
-        <div class="sx-scrim"></div>
-      </div>
-      <p class="sx-title display" id="sx-title"></p>
-      <p class="sx-hint mono" aria-hidden="true">[Scroll to open] ↓</p>
-      <div class="sx-overlay">
-        <div class="sx-ov-left">
-          <span class="mono" id="sx-cat"></span>
-          <p id="sx-tagline"></p>
-        </div>
-        <div class="sx-ov-right">
-          <div class="stat"><b id="sx-price"></b><span class="mono">Incl. of all taxes</span></div>
-          <a class="btn btn-white" href="#pdp2">Every angle <span class="arrow">↓</span></a>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="pdp2" id="pdp2">
     <div class="pdp2-stage">
       <aside class="pdp2-left">
@@ -48,17 +26,18 @@
         <span class="mono muted">Sample content</span>
       </aside>
 
-      <div class="pdp2-canvas">
+      <div class="pdp2-canvas" tabindex="0" aria-label="Garment preview. Drag the fabric to pull it, drag around it or use the arrow keys to turn it, double-click to reset.">
+        <h1 class="display pdp-title" id="pdp-name"></h1>
         <div class="pdp2-rig" id="rig">
           <div class="layer front" id="layer-front"></div>
           <div class="layer back" id="layer-back"></div>
         </div>
+        <p class="pdp-hint" aria-hidden="true">pull the fabric · drag around it to turn</p>
         <div class="views" id="views" role="group" aria-label="Product views"></div>
       </div>
 
       <div class="pdp2-right">
         <nav class="mono muted" aria-label="Breadcrumb"><a href="index.html#collection">Shop</a> / <span id="crumb-name"></span></nav>
-        <h1 class="display" id="pdp-name"></h1>
         <div class="price-big" id="pdp-price"></div>
         <div class="spec-row" id="pdp-specs"></div>
         <div>
@@ -79,6 +58,11 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <section class="on-model" aria-labelledby="om-title">
+    <div class="om-head"><h2 class="display" id="om-title">on model</h2><p id="om-note"></p></div>
+    <div class="om-grid" id="om-grid"></div>
   </section>
 
   <section class="also">
@@ -103,11 +87,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="js/data.js?v=20261010221625"></script>
-<script src="js/garments.js?v=20261010221625"></script>
+<script src="js/data.js?v=20261010231930"></script>
+<script src="js/garments.js?v=20261010231930"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="js/cloth.js?v=20261010221625"></script>
-<script src="js/tear-ticket.js?v=20261010221625"></script>
-<script src="js/app.js?v=20261010221625"></script>
+<script src="js/cloth.js?v=20261010231930"></script>
+<script src="js/tear-ticket.js?v=20261010231930"></script>
+<script src="js/app.js?v=20261010231930"></script>
 </body>
 </html>

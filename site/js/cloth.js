@@ -144,9 +144,12 @@
       for (let iy = 0; iy < GY; iy++) for (let ix = 0; ix <= GX; ix++) this.solve(ix + iy * W, ix + (iy + 1) * W, rv, iy === 0, false);
     }
     for (let ix = 0; ix <= GX; ix++) for (let k = 0; k < 3; k++) { c[ix * 3 + k] = p[ix * 3 + k] = rest[ix * 3 + k]; }
-    if (this.grab) {   // a hand holding the fabric: the held point follows the pointer, its neighbours are dragged along by the solver
-      const g = this.grab, j = g.i * 3;
-      c[j] = g.x; c[j + 1] = g.y; c[j + 2] = g.z;
+    if (this.grab) {   // a hand holding the fabric: a soft patch around the grabbed point follows the pointer (fingers, not a needle)
+      const g = this.grab;
+      g.patch.forEach((n) => {
+        const j = n.i * 3;
+        c[j] += (g.x + n.dx - c[j]) * n.w; c[j + 1] += (g.y + n.dy - c[j + 1]) * n.w; c[j + 2] += (g.z + n.dz - c[j + 2]) * n.w;
+      });
     }
   };
 
@@ -188,7 +191,7 @@
     };
     area.style.touchAction = "none";
     area.addEventListener("pointerdown", (e) => {
-      if (id !== null || !this.mesh) return;
+      if (id !== null || !this.mesh || e.target.closest("button, a, input, select, label")) return;
       const f = onFabric(e);
       id = e.pointerId; lastX = e.clientX;
       try { area.setPointerCapture(id); } catch (err) { /* ignore */ }
@@ -196,7 +199,15 @@
         mode = "pull";
         plane.setFromNormalAndCoplanarPoint(this.camera.getWorldDirection(new THREE.Vector3()).negate(), f.point);
         const local = this.mesh.worldToLocal(f.point.clone());
-        this.grab = { i: f.i, x: local.x, y: local.y, z: local.z };
+        // the patch: vertices within two grid cells, pulled with less force the further they are from the finger
+        const gx = f.i % (GX + 1), gy = Math.floor(f.i / (GX + 1)), c = this.cur, patch = [];
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+          const x = gx + dx, y = gy + dy; if (x < 0 || x > GX || y < 1 || y > GY) continue;
+          const d = Math.hypot(dx, dy); if (d > 2.3) continue;
+          const i = x + y * (GX + 1);
+          patch.push({ i, w: d === 0 ? 1 : 0.55 / d, dx: c[i * 3] - c[f.i * 3], dy: c[i * 3 + 1] - c[f.i * 3 + 1], dz: c[i * 3 + 2] - c[f.i * 3 + 2] });
+        }
+        this.grab = { i: f.i, x: local.x, y: local.y, z: local.z, patch };
       } else mode = "turn";
       area.classList.add(mode === "pull" ? "is-pulling" : "is-turning");
       live.add(this); wake();

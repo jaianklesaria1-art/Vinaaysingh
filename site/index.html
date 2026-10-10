@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site.css?v=20261010221625">
+<link rel="stylesheet" href="css/site.css?v=20261010231930">
 </head>
 <body data-page="home">
 <main>
@@ -17,10 +17,24 @@
     <div class="sx-stage">
       <div class="sx-frame">
         <div class="sx-media sx-scene">
-          <div class="sx-smoke back" aria-hidden="true"></div>
           <span class="sx-ghost" aria-hidden="true">unorgnl.</span>
           <div class="sx-photo" id="hero-figure"></div>
-          <div class="sx-smoke front" aria-hidden="true"></div>
+          <div class="sx-callouts" aria-hidden="true">
+            <span class="callout c1" style="--x:83%;--y:24%"><i></i><b>240 gsm cotton<small>heavy, holds its shape</small></b></span>
+            <span class="callout c2 left" style="--x:30%;--y:40%"><i></i><b>Puff print<small>raised, not printed flat</small></b></span>
+            <span class="callout c3" style="--x:74%;--y:90%"><i></i><b>Boxy fit<small>dropped shoulder, cropped hem</small></b></span>
+          </div>
+          <div class="runway" aria-hidden="true">
+            <div class="model">
+              <span class="m-leg l"></span><span class="m-leg r"></span>
+              <span class="m-shoe l"></span><span class="m-shoe r"></span>
+              <span class="m-neck"></span><span class="m-head"></span>
+              <span class="m-bottom"></span><span class="m-top"></span>
+            </div>
+            <span class="callout runway-tag"><i></i><b></b></span>
+          </div>
+          <svg class="sx-badge" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="badge-circle" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs>
+            <text><textPath href="#badge-circle">FIRST RUN · 2026 · NOTHING IS ORIGINAL · </textPath></text><text class="badge-star" x="60" y="68" text-anchor="middle">✶</text></svg>
           <span class="sx-tag tl mono">[01] Supercharge Power Boy Tee</span>
         </div>
         <div class="sx-scrim"></div>
@@ -57,10 +71,18 @@
     <div class="cats-frame" id="cats-frame" tabindex="0" aria-label="Garment preview. Drag the fabric to pull it, drag around it or use the arrow keys to turn it, double-click to reset."></div>
   </section>
 
+  <!-- Lookbook: editorial spread of looks built from the collection -->
+  <section class="lookbook" id="lookbook" aria-labelledby="lb-title">
+    <div class="lb-head"><h2 class="display section-title" id="lb-title">the lookbook</h2>
+      <p class="lb-lede">Four ways to wear the first run. Tap a look to try it in the fitting room.</p></div>
+    <div class="lb-grid" id="lb-grid"></div>
+    <p class="lb-note">Styled with product photos. On-model shots arrive with the photoshoot.</p>
+  </section>
+
   <!-- Build your fit: a fitting room. Rails of pieces, an arched mirror you can turn, a swing tag with sizes -->
   <section class="fit" id="fit" aria-labelledby="fit-title">
+    <h2 class="display section-title fit-title" id="fit-title">build your fit</h2>
     <div class="fit-side">
-      <h2 class="display section-title" id="fit-title">build your fit</h2>
       <p class="fit-lede">Pick a top and a bottom. Drag the mirror to turn the outfit.</p>
       <div class="fit-rail"><h3>Tops</h3><div class="fit-rail-list" id="fit-tops" role="radiogroup" aria-label="Choose a top"></div></div>
       <div class="fit-rail"><h3>Bottoms</h3><div class="fit-rail-list" id="fit-bottoms" role="radiogroup" aria-label="Choose a bottom"></div></div>
@@ -107,6 +129,13 @@
     <div class="rev-rule" aria-hidden="true"><span></span></div>
   </section>
 
+  <!-- Your fits: customer photos (real posts only) -->
+  <section class="ugc" id="your-fits" aria-labelledby="ugc-title">
+    <div class="ugc-head"><h2 class="display section-title" id="ugc-title">your fits</h2>
+      <p>Wearing it? Post your fit and tag us. The best ones end up here.</p></div>
+    <div class="ugc-grid" id="ugc-grid"></div>
+  </section>
+
   <div class="marquee light" aria-hidden="true"><div class="marquee-track" id="marquee-2"></div></div>
 
   <section class="benefits" aria-label="Why unorgnl.">
@@ -118,16 +147,21 @@
     </div>
     <p class="mono" style="margin-top:20px;color:#9B968D">Sample copy until Vinaay confirms fabrics and runs</p>
   </section>
+  <!-- FAQ -->
+  <section class="faq" id="faq" aria-labelledby="faq-title">
+    <h2 class="display section-title" id="faq-title">questions, answered</h2>
+    <div class="faq-list" id="faq-list"></div>
+    <p class="faq-more">Still stuck? <a class="linkish" href="contact.html">Contact us</a> or <a class="linkish" href="track.html">track your order</a>.</p>
+  </section>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="js/data.js?v=20261010221625"></script>
-<script src="js/garments.js?v=20261010221625"></script>
+<script src="js/data.js?v=20261010231930"></script>
+<script src="js/garments.js?v=20261010231930"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="js/cloth.js?v=20261010221625"></script>
-<script src="js/smoke.js?v=20261010221625"></script>
-<script src="js/tear-ticket.js?v=20261010221625"></script>
-<script src="js/app.js?v=20261010221625"></script>
+<script src="js/cloth.js?v=20261010231930"></script>
+<script src="js/tear-ticket.js?v=20261010231930"></script>
+<script src="js/app.js?v=20261010231930"></script>
 </body>
 </html>
