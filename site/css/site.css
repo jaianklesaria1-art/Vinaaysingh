@@ -1354,3 +1354,16 @@ img.garment.photo { width: 100%; height: auto; aspect-ratio: 1600 / 1760; object
 @media (max-width: 960px) { .cats-frame .ghost { font-size: 110px; } }
 .cats-frame .ghost { inset: 1.5% 0 auto 0; font-size: 118px; }
 @media (max-width: 960px) { .cats-frame .ghost { font-size: 90px; } }
+
+/* product card arrows: step through the colours */
+.pc-arrow { position: absolute; z-index: 5; top: 50%; width: 34px; height: 34px; margin-top: -17px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--card); display: grid; place-items: center; opacity: 0; transition: opacity .2s, transform .2s var(--ease), background .2s, color .2s; }
+.pc-arrow svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pc-arrow.prev { left: 10px; transform: translateX(-4px); } .pc-arrow.next { right: 10px; transform: translateX(4px); }
+.pcard:hover .pc-arrow, .pc-arrow:focus-visible { opacity: 1; transform: none; }
+.pc-arrow:hover { background: var(--ink); color: var(--white); }
+.pc-arrow:active { transform: scale(.92); }
+.pc-arrow:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.still.slide-l { animation: slidein-l .35s var(--ease); } .still.slide-r { animation: slidein-r .35s var(--ease); }
+@keyframes slidein-l { from { transform: translateX(14%); opacity: 0; } } @keyframes slidein-r { from { transform: translateX(-14%); opacity: 0; } }
+@media (hover: none) { .pc-arrow { opacity: 1; transform: none; width: 30px; height: 30px; margin-top: -15px; } }
+@media (prefers-reduced-motion: reduce) { .still.slide-l, .still.slide-r { animation: none; } }

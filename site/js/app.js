@@ -605,6 +605,7 @@
       <div class="pcard-stage">
         <div class="pcard-top"><span class="cat">${esc(p.category)}</span><span class="price">${fmt(p.price)}</span></div>
         <span class="pcard-ground" aria-hidden="true"></span>
+        ${p.colors.length > 1 ? `<button class="pc-arrow prev" type="button" data-step="-1" aria-label="Previous colour of ${esc(p.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><button class="pc-arrow next" type="button" data-step="1" aria-label="Next colour of ${esc(p.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>` : ""}
         <div class="pcard-figure"><div class="still">${art(p)}</div>${m.loop ? `<video muted loop playsinline preload="none" src="${m.loop}" aria-hidden="true"></video>` : ""}</div>
       </div>
       <div class="pcard-body">
@@ -626,6 +627,16 @@
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     // colour dots recolour the card
     root.addEventListener("click", (e) => {
+      // arrows step through the colours, the same as tapping the next dot
+      const arrow = e.target.closest(".pc-arrow");
+      if (arrow) {
+        e.preventDefault();
+        const c = arrow.closest(".pcard"), dots = $$("[data-dot]", c), now = dots.findIndex((b) => b.getAttribute("aria-pressed") === "true");
+        const nextDot = dots[(now + +arrow.dataset.step + dots.length) % dots.length];
+        nextDot.click();
+        const still = $(".still", c); still.classList.remove("slide-l", "slide-r"); void still.offsetWidth; still.classList.add(+arrow.dataset.step > 0 ? "slide-l" : "slide-r");
+        return;
+      }
       const dot = e.target.closest("[data-dot]"); if (!dot) return;
       const card = dot.closest(".pcard"); const p = bySlug(card.dataset.slug);
       $$("[data-dot]", card).forEach((b) => b.setAttribute("aria-pressed", String(b === dot)));
