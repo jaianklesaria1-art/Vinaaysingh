@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site.css?v=20261010231930">
+<link rel="stylesheet" href="css/site.css?v=20261011001805">
 </head>
 <body data-page="product">
 <main>
@@ -17,9 +17,8 @@
       <aside class="pdp2-left">
         <h4>Details</h4>
         <p id="pdp-desc"></p>
-        <p id="pdp-fit"></p>
+        <div class="spec-row spec-list" id="pdp-specs"></div>
         <div class="links">
-          <a href="#" id="size-guide">Size guide</a>
           <a href="#" data-info="ship">Shipping and returns</a>
           <a href="#" data-info="pay">Payment information</a>
         </div>
@@ -38,24 +37,28 @@
 
       <div class="pdp2-right">
         <nav class="mono muted" aria-label="Breadcrumb"><a href="index.html#collection">Shop</a> / <span id="crumb-name"></span></nav>
-        <div class="price-big" id="pdp-price"></div>
-        <div class="spec-row" id="pdp-specs"></div>
+        <div class="price-row">
+          <div class="price-big" id="pdp-price"></div>
+          <button class="rv-chip" type="button" id="rv-chip" aria-haspopup="dialog" aria-controls="rv-panel"></button>
+        </div>
         <div>
           <div class="opt-label"><span>Colour: <b id="color-name"></b></span></div>
           <div class="swatches" id="swatches" role="group" aria-label="Colour"></div>
         </div>
         <div>
-          <div class="opt-label"><span>Size</span></div>
+          <div class="opt-label"><span>Size</span><a href="#" id="size-guide" class="linkish">Size guide</a></div>
           <div class="sizes" id="sizes" role="group" aria-label="Size"></div>
+          <p class="fit-note" id="pdp-fit"></p>
           <p class="size-error" id="size-error" role="alert"></p>
         </div>
         <button class="btn btn-orange btn-block" type="button" data-add data-cta="Bag it">Add to bag <span class="arrow">→</span></button>
         <div class="assure">
-          <span>✶ Delivery in 3 to 6 working days. Free over ₹2,999.</span>
+          <span class="arrive" id="pdp-arrive">✶ Delivery in 3 to 6 working days. Free over ₹2,999.</span>
           <span>✶ Easy 7-day returns and exchanges.</span>
           <span>✶ UPI, cards and cash on delivery.</span>
           <span class="mono">Sample policies</span>
         </div>
+        <div class="pair-up" id="pair-up" hidden></div>
       </div>
     </div>
   </section>
@@ -85,13 +88,44 @@
   <button class="btn btn-orange" type="button" data-add>Add to bag</button>
 </div>
 
+<div class="rv-scrim" id="rv-scrim" hidden></div>
+<aside class="rv-panel" id="rv-panel" role="dialog" aria-modal="true" aria-labelledby="rv-title" hidden tabindex="-1">
+  <header class="rv-panel-head">
+    <h2 id="rv-title">Reviews</h2>
+    <button class="icon-btn" type="button" data-rv-close aria-label="Close reviews"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6"/></svg></button>
+  </header>
+  <div class="rv-panel-body">
+    <div class="rv-summary" id="rv-summary"></div>
+    <form class="rv-form" id="rv-form" novalidate>
+      <p class="rv-ask" id="rv-ask">Own it? Tap a star to rate it.</p>
+      <div class="rv-rate"><div class="rv-stars-input" role="radiogroup" aria-labelledby="rv-ask"></div><span class="rv-word" aria-live="polite"></span></div>
+      <div class="rv-more">
+        <div class="rv-step"><div class="rv-fit" role="radiogroup" aria-label="How did it fit?">
+          <label><input type="radio" name="fit" value="small"><span>Runs small</span></label>
+          <label><input type="radio" name="fit" value="true" checked><span>True to size</span></label>
+          <label><input type="radio" name="fit" value="large"><span>Runs large</span></label></div></div>
+        <div class="rv-step rv-line"><input name="name" aria-label="Your name" placeholder="Your name" maxlength="40" autocomplete="given-name">
+          <input name="city" aria-label="City (optional)" placeholder="City (optional)" maxlength="40" autocomplete="address-level2">
+          <select name="size" aria-label="Size you bought" id="rv-size"></select></div>
+        <div class="rv-step"><textarea name="text" rows="3" maxlength="800" aria-label="Your review" placeholder="How does it feel, fit and wash?"></textarea></div>
+        <div class="rv-step rv-photos" id="rv-photos"><label class="rv-add" title="Add photos"><input type="file" accept="image/*" multiple hidden id="rv-file"><span aria-hidden="true">+</span><b class="sr">Add photos (up to 3)</b></label><span class="rv-photo-hint">Add up to 3 photos</span></div>
+        <div class="rv-step"><label class="rv-consent"><input type="checkbox" name="consent"> I bought this, and the shop may show my review and photos.</label></div>
+        <input type="text" name="hp" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+        <p class="rv-error" id="rv-error" role="alert"></p>
+        <div class="rv-step rv-actions"><button class="rv-post" type="submit"><span class="rv-post-label">Post review</span><svg class="rv-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="linkish" type="button" id="rv-cancel">Not now</button></div>
+      </div>
+    </form>
+    <div class="rv-list" id="rv-list"></div>
+  </div>
+</aside>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="js/data.js?v=20261010231930"></script>
-<script src="js/garments.js?v=20261010231930"></script>
+<script src="js/data.js?v=20261011001805"></script>
+<script src="js/garments.js?v=20261011001805"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="js/cloth.js?v=20261010231930"></script>
-<script src="js/tear-ticket.js?v=20261010231930"></script>
-<script src="js/app.js?v=20261010231930"></script>
+<script src="js/cloth.js?v=20261011001805"></script>
+<script src="js/tear-ticket.js?v=20261011001805"></script>
+<script src="js/app.js?v=20261011001805"></script>
 </body>
 </html>

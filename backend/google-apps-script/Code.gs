@@ -10,6 +10,8 @@
 const CONFIG = {
   SHEET_NAME: "Orders",
   DISCOUNT_SHEET: "Discounts",
+  REVIEW_SHEET: "Reviews",
+  REVIEW_FOLDER: "unorgnl. review photos",   // Drive folder for customer review photos (created automatically)
   STORE_NAME: "unorgnl.",
   NOTIFY_EMAIL: "",                 // shop inbox for new-order emails, e.g. "orders@yourdomain.in"
   SITE_URL: "",                     // live site address without a trailing slash, e.g. "https://unorgnl.in"
@@ -61,7 +63,56 @@ function setup() {
     ds.getRange(2, 2, 500, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["Percent", "Flat"], true).build());
     ds.getRange(2, 5, 500, 1).insertCheckboxes();
   }
+  reviewSheet_();
 }
+/* ---------- reviews: saved unpublished; Vinaay ticks "Approved" in the Reviews tab to show one on the site ---------- */
+const REVIEW_HEADERS = ["Date", "Product", "Name", "City", "Rating", "Size", "Fit", "Review", "Photos", "Approved"];
+function reviewSheet_() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(CONFIG.REVIEW_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(CONFIG.REVIEW_SHEET);
+    sh.getRange(1, 1, 1, REVIEW_HEADERS.length).setValues([REVIEW_HEADERS]).setFontWeight("bold").setBackground("#111111").setFontColor("#ffffff");
+    sh.setFrozenRows(1);
+    sh.getRange(2, REVIEW_HEADERS.length, 1000, 1).insertCheckboxes();
+    sh.setColumnWidth(8, 380);
+  }
+  return sh;
+}
+function reviewFolder_() {
+  const it = DriveApp.getFoldersByName(CONFIG.REVIEW_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(CONFIG.REVIEW_FOLDER);
+}
+function saveReview_(b) {
+  const clean = (v, n) => String(v || "").trim().slice(0, n);
+  const slug = clean(b.slug, 60);
+  if (!PRICES[slug]) return { ok: false, error: "product" };
+  const name = clean(b.name, 40), text = clean(b.text, 800), rating = Math.max(1, Math.min(5, parseInt(b.rating, 10) || 5));
+  if (name.length < 2 || text.length < 10) return { ok: false, error: "fields" };
+  const fit = ["small", "true", "large"].indexOf(b.fit) !== -1 ? b.fit : "";
+  const size = PRICES[slug].sizes.indexOf(String(b.size)) !== -1 ? String(b.size) : "";
+  // photos: up to 3 JPEG/PNG data URLs, each under ~2 MB, saved to Drive and shared view-only by link
+  const links = [];
+  (Array.isArray(b.photos) ? b.photos : []).slice(0, 3).forEach((d, i) => {
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(d));
+    if (!m || m[2].length > 2800000) return;
+    const blob = Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], `${slug}-${Date.now()}-${i + 1}.${m[1] === "image/png" ? "png" : "jpg"}`);
+    const file = reviewFolder_().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    links.push("https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w1200");
+  });
+  reviewSheet_().appendRow([new Date(), slug, name, clean(b.city, 40), rating, size, fit, text, links.join("\n"), false].map(safe_));
+  return { ok: true };
+}
+function approvedReviews_(slug) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.REVIEW_SHEET);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, REVIEW_HEADERS.length).getValues()
+    .filter((r) => r[1] === slug && r[9] === true)
+    .reverse().slice(0, 50)
+    .map((r) => ({ name: r[2], detail: r[3], rating: Number(r[4]) || 5, size: r[5], fit: r[6], quote: r[7], photos: String(r[8] || "").split("\n").filter(Boolean) }));
+}
+
 const DISC_HEADERS = ["Code", "Type", "Value", "Min order (₹)", "Active", "Expires", "Max uses", "Used", "Label (shown to customer)"];
 
 /* returns { code, type, value, min, label, amount } or { error } */
@@ -96,6 +147,7 @@ function doPost(e) {
     lock.waitLock(20000);
     const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     if (body.hp) return json_({ ok: false, error: "rejected" });             // honeypot: bots fill hidden fields
+    if (body.type === "review") return json_(saveReview_(body));
     const order = validate_(body);
     if (order.error) return json_({ ok: false, error: order.error });
 
@@ -132,6 +184,7 @@ function doPost(e) {
 /* ---------- website: track an order ---------- */
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  if (p.action === "reviews") return json_({ ok: true, reviews: approvedReviews_(String(p.slug || "")) });
   if (p.action === "discount") {
     const d = findDiscount_(p.code);
     if (!d || d.error) return json_({ ok: false, error: (d && d.error) || "invalid" });

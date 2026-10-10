@@ -82,3 +82,11 @@ The site checks codes against this tab, and every order is re-checked here, so a
 - Google's free email quota is about 100 emails a day on a normal Gmail account. Fine for a new shop.
 - Payment status updates every 10 minutes, not instantly.
 - This is a starter setup. When orders grow, move to Shopify (or a custom backend) and import this sheet.
+
+## Reviews (Reviews tab)
+Customers can write a review with up to 3 photos on any product page.
+- Each review lands in the **Reviews** tab, **unpublished**. Photos are saved in a Drive folder called "unorgnl. review photos" (shared view-only by link so the site can show them).
+- To publish a review, tick **Approved** on its row. It appears on that product's page within a minute.
+- To hide one later, untick Approved. To remove a photo, delete it from the Drive folder and its link from the row.
+- Approve only real reviews from real customers. Before launch, delete the sample reviews in `site/js/data.js` (`reviews: [...]`).
+- After updating the code, redeploy the script (Deploy → Manage deployments → Edit → New version) so reviews work.

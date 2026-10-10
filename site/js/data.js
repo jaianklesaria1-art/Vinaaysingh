@@ -107,16 +107,17 @@ window.UNORGNL = {
   /* DISCOUNT CODES used only in demo mode (no ordersUrl). Live codes come from the "Discounts" tab of the order sheet,
      which also re-checks every code when an order arrives. type: "percent" or "flat"; min = minimum order in ₹. */
   demoDiscounts: [{ code: "FIRSTRUN10", type: "percent", value: 10, min: 0, label: "10% off your first order" }],
-  /* SAMPLE reviews written for the client demo (sample: true shows a small "Sample" tag).
-     DELETE these and add real ones before launch. Order fills the grid: big, small, then the middle column, then small, big. */
+  /* REVIEWS shown on each product page. SAMPLE reviews were written for the client demo (sample: true shows a "Sample" tag):
+     DELETE them before launch. Live reviews come from the "Reviews" tab of the order sheet once Vinaay ticks Approved.
+     Format: { slug, name, detail (city), rating 1-5, size, fit: "small" | "true" | "large", quote, photos: ["url", ...] } */
   reviews: [
-    { sample: true, slug: "supercharge-power-boy-tee", name: "Aarav", detail: "Pune", quote: "Wore the Supercharge tee to a gig and three people asked where it's from. The puff print feels raised and properly made, not like a sticker." },
-    { sample: true, slug: "copy-bomber", name: "Meher", detail: "Mumbai", quote: "The red on the bomber is unreal in person. Cropped fit sits exactly right." },
-    { sample: true, slug: "remix-tee", name: "Kabir", detail: "Bengaluru", quote: "Finally a boxy tee that keeps its shape all day." },
-    { sample: true, slug: "second-draft-cargo", name: "Ishaan", detail: "Delhi", quote: "Six pockets and it still looks clean. The drawcord hem is the move." },
-    { sample: true, slug: "ditto-overshirt", name: "Tara", detail: "Hyderabad", quote: "Throw it over a tee and you're done. My most worn piece this month." },
-    { sample: true, slug: "carbon-copy-shirt", name: "Rohan", detail: "Ahmedabad", quote: "Camp collar, soft poplin. It's in my bag for every trip now." },
-    { sample: true, slug: "rerun-trouser", name: "Ziya", detail: "Kolkata", quote: "Didn't think trousers could be the statement piece. The pleat and the taper make the whole fit look planned." },
+    { sample: true, slug: "supercharge-power-boy-tee", rating: 5, size: "M", fit: "true", name: "Aarav", detail: "Pune", quote: "Wore the Supercharge tee to a gig and three people asked where it's from. The puff print feels raised and properly made, not like a sticker." },
+    { sample: true, slug: "copy-bomber", rating: 5, size: "L", fit: "true", name: "Meher", detail: "Mumbai", quote: "The red on the bomber is unreal in person. Cropped fit sits exactly right." },
+    { sample: true, slug: "remix-tee", rating: 4, size: "M", fit: "large", name: "Kabir", detail: "Bengaluru", quote: "Finally a boxy tee that keeps its shape all day." },
+    { sample: true, slug: "second-draft-cargo", rating: 5, size: "32", fit: "true", name: "Ishaan", detail: "Delhi", quote: "Six pockets and it still looks clean. The drawcord hem is the move." },
+    { sample: true, slug: "ditto-overshirt", rating: 4, size: "M", fit: "true", name: "Tara", detail: "Hyderabad", quote: "Throw it over a tee and you're done. My most worn piece this month." },
+    { sample: true, slug: "carbon-copy-shirt", rating: 5, size: "L", fit: "true", name: "Rohan", detail: "Ahmedabad", quote: "Camp collar, soft poplin. It's in my bag for every trip now." },
+    { sample: true, slug: "rerun-trouser", rating: 5, size: "30", fit: "small", name: "Ziya", detail: "Kolkata", quote: "Didn't think trousers could be the statement piece. The pleat and the taper make the whole fit look planned." },
   ],
   sizes: { tee: ["S", "M", "L", "XL", "XXL"], overshirt: ["S", "M", "L", "XL"], cargo: ["28", "30", "32", "34", "36"], jacket: ["S", "M", "L", "XL"] },
 };

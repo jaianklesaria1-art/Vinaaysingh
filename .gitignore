@@ -12,3 +12,4 @@ site/images/cut/
 *.zip
 .DS_Store
 Thumbs.db
+_check.html

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site.css?v=20261010231930">
+<link rel="stylesheet" href="css/site.css?v=20261011001805">
 </head>
 <body data-page="home">
 <main>
@@ -41,6 +41,7 @@
       </div>
       <h1 class="sx-title sx-split"><span class="l1">Nothing is original.</span> <span class="l2">Inspired by you.</span></h1>
       <p class="sx-hint mono" aria-hidden="true">[Scroll to open] ↓</p>
+      <a class="sx-skip" href="#collection">Skip to the collection ↓</a>
       <div class="sx-overlay">
         <div class="sx-ov-left">
           <span class="mono">[First run] // 2026</span>
@@ -69,6 +70,16 @@
       <ul class="cats-list" id="cats-list"></ul>
     </div>
     <div class="cats-frame" id="cats-frame" tabindex="0" aria-label="Garment preview. Drag the fabric to pull it, drag around it or use the arrow keys to turn it, double-click to reset."></div>
+  </section>
+
+  <!-- HUNTER-style collection -->
+  <section class="collection" id="collection">
+    <div class="col-head">
+      <h2 class="display section-title reveal">Our collection</h2>
+      <p class="muted reveal"><span class="star" style="font-size:16px">✶✶</span><br>Eight pieces from the first run. Each one cut, washed and finished to last. Sample products.</p>
+    </div>
+    <div class="filters" id="filters" role="group" aria-label="Filter products"></div>
+    <div class="pgrid" id="grid"></div>
   </section>
 
   <!-- Lookbook: editorial spread of looks built from the collection -->
@@ -109,24 +120,14 @@
     </div>
   </section>
 
-  <!-- HUNTER-style collection -->
-  <section class="collection" id="collection">
-    <div class="col-head">
-      <h2 class="display section-title reveal">Our collection</h2>
-      <p class="muted reveal"><span class="star" style="font-size:16px">✶✶</span><br>Eight pieces from the first run. Each one cut, washed and finished to last. Sample products.</p>
+  <section class="benefits" aria-label="Why unorgnl.">
+    <h2 class="display section-title">Why it's worth keeping</h2>
+    <div class="bgrid">
+      <div class="bbox hot"><h3>Heavy fabrics, honest prices</h3><p>240 gsm cotton tees, heavy twill shirts and pants, priced for everyday wear, not for a logo.</p></div>
+      <div class="bbox"><h3>Cut, then cut again</h3><p>Each pattern is refined until the shoulder, the drop and the length feel right.</p></div>
+      <div class="bbox"><h3>First run only</h3><p>Small runs. When a piece is gone, it's gone.</p></div>
     </div>
-    <div class="filters" id="filters" role="group" aria-label="Filter products"></div>
-    <div class="pgrid" id="grid"></div>
-  </section>
-
-  <!-- Reviews: bento grid with a staggered blur reveal (port of the ClientFeedback component) -->
-  <section class="reviews" id="reviews" aria-labelledby="rev-title">
-    <div class="rev-head">
-      <h2 class="display section-title rev-reveal" id="rev-title" style="--i:0">worn by you</h2>
-      <p class="rev-reveal" style="--i:1">What the first run says, from the people wearing it.</p>
-    </div>
-    <div class="rev-grid" id="rev-grid"></div>
-    <div class="rev-rule" aria-hidden="true"><span></span></div>
+    <p class="mono" style="margin-top:20px;color:#9B968D">Sample copy until Vinaay confirms fabrics and runs</p>
   </section>
 
   <!-- Your fits: customer photos (real posts only) -->
@@ -138,30 +139,22 @@
 
   <div class="marquee light" aria-hidden="true"><div class="marquee-track" id="marquee-2"></div></div>
 
-  <section class="benefits" aria-label="Why unorgnl.">
-    <h2 class="display section-title">Why it's worth keeping</h2>
-    <div class="bgrid">
-      <div class="bbox hot"><h3>Heavy fabrics, honest prices</h3><p>240 gsm cotton tees, heavy twill shirts and pants, priced for everyday wear, not for a logo.</p></div>
-      <div class="bbox"><h3>Cut, then cut again</h3><p>Each pattern is refined until the shoulder, the drop and the length feel right.</p></div>
-      <div class="bbox"><h3>First run only</h3><p>Small runs. When a piece is gone, it's gone.</p></div>
-    </div>
-    <p class="mono" style="margin-top:20px;color:#9B968D">Sample copy until Vinaay confirms fabrics and runs</p>
-  </section>
   <!-- FAQ -->
   <section class="faq" id="faq" aria-labelledby="faq-title">
     <h2 class="display section-title" id="faq-title">questions, answered</h2>
     <div class="faq-list" id="faq-list"></div>
     <p class="faq-more">Still stuck? <a class="linkish" href="contact.html">Contact us</a> or <a class="linkish" href="track.html">track your order</a>.</p>
   </section>
+
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="js/data.js?v=20261010231930"></script>
-<script src="js/garments.js?v=20261010231930"></script>
+<script src="js/data.js?v=20261011001805"></script>
+<script src="js/garments.js?v=20261011001805"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="js/cloth.js?v=20261010231930"></script>
-<script src="js/tear-ticket.js?v=20261010231930"></script>
-<script src="js/app.js?v=20261010231930"></script>
+<script src="js/cloth.js?v=20261011001805"></script>
+<script src="js/tear-ticket.js?v=20261011001805"></script>
+<script src="js/app.js?v=20261011001805"></script>
 </body>
 </html>

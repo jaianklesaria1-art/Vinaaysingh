@@ -801,10 +801,10 @@
     list.addEventListener("click", (e) => { const a = e.target.closest("[data-cat]"); if (a) setFilter(a.dataset.cat); });
     showCat(cats[0]);
     // [Categories] label + the category lines wave sideways on scroll
-    wavyBlock($(".cats > div"), [$(".cats > div > .mono"), ...$$("li", list)]);
+    // a smaller wave on phones so no line slides off the edge
+    wavyBlock($(".cats > div"), [$(".cats > div > .mono"), ...$$("li", list)], isSmall() ? { baseOffsetFactor: 0.12, baseAmplitude: 70 } : {});
 
     initFit();
-    initReviews();
     initLookbook();
     initUgc();
     initFaq();
@@ -909,7 +909,7 @@
       return clamp01((scrolled - vh * (SX.scrollDistance + 0.15)) / (vh * RUNWAY_LEN));
     };
     const paint = (r) => {
-      const vw = window.innerWidth, off = vw * 0.75;
+      const vw = window.innerWidth, off = Math.max(vw * 0.75, vw / 2 + 340);   // far enough that nothing peeks in on a narrow phone
       // 0 - 0.12: the hero tee steps off to the left
       const teeOut = ease(clamp01(r / 0.12));
       figure.style.transform = teeOut > 0 ? `translateX(${(-off * teeOut).toFixed(1)}px)` : "";
@@ -1054,6 +1054,175 @@
     io.observe($("#reviews"));
   }
 
+  /* ---------- arrival estimate: 1-2 working days to pack, 3-6 to deliver, Sundays skipped ---------- */
+  function initArrival() {
+    const el = $("#pdp-arrive"); if (!el) return;
+    const add = (d, n) => { const x = new Date(d); while (n > 0) { x.setDate(x.getDate() + 1); if (x.getDay() !== 0) n--; } return x; };
+    const now = new Date(), a = add(now, 1 + 3), b = add(now, 2 + 6);
+    const day = (d) => d.toLocaleDateString("en-IN", { day: "numeric" });
+    const mon = (d) => d.toLocaleDateString("en-IN", { month: "short" });
+    const range = a.getMonth() === b.getMonth() ? `${day(a)}–${day(b)} ${mon(b)}` : `${day(a)} ${mon(a)} – ${day(b)} ${mon(b)}`;
+    el.innerHTML = `✶ <b>Arrives ${range}</b> with standard delivery. Free over ${fmt(D.freeShippingOver)}.`;
+  }
+
+  /* ---------- complete the fit: the matching piece, added in two taps (size, then done) ---------- */
+  function initPairUp(p) {
+    const box = $("#pair-up"); if (!box) return;
+    const look = LOOKS.find((l) => l.top === p.slug || l.bottom === p.slug);
+    let other = look ? bySlug(look.top === p.slug ? look.bottom : look.top) : null;
+    if (!other) other = D.products.find((x) => (p.category === "Pants" ? x.category !== "Pants" : x.category === "Pants") && x.slug !== p.slug);
+    if (!other) return;
+    const sizes = D.sizes[other.type] || ["One size"];
+    box.hidden = false;
+    box.innerHTML = `<a class="pu-img" href="product.html?p=${other.slug}" style="--tone:${tone(other)}">${art(other)}</a>
+      <div class="pu-main"><span class="pu-label">Complete the fit</span><a class="pu-name" href="product.html?p=${other.slug}">${esc(other.name)}</a><span class="pu-price">${fmt(other.price)}</span>
+        <div class="pu-sizes" role="group" aria-label="Size for ${esc(other.name)}" hidden>${sizes.map((z) => `<button type="button" class="size" data-pu-size="${esc(z)}">${esc(z)}</button>`).join("")}</div></div>
+      <button type="button" class="pu-add" aria-expanded="false">+ Add</button>`;
+    const btn = $(".pu-add", box), row = $(".pu-sizes", box);
+    btn.addEventListener("click", () => {
+      if (btn.classList.contains("done")) { renderBag(); openDrawer(); return; }
+      const open = row.hidden; row.hidden = !open; btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Pick a size" : "+ Add";
+    });
+    row.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pu-size]"); if (!b) return;
+      addToBag(other.slug, other.colors[0].name, b.dataset.puSize, { silent: true });
+      flyToBag($(".pu-img", box)).then(() => { updateCount(true); toast(`${other.name} added to bag`); });
+      row.hidden = true; btn.classList.add("done"); btn.textContent = "Added ✓ View bag";
+    });
+  }
+
+  /* ---------- product reviews: per product, with photos; new reviews go to the sheet for approval ---------- */
+  const stars = (n) => `<span class="rv-stars" aria-label="${n} out of 5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}">★</i>`).join("")}</span>`;
+  const FIT = { small: "Runs small", true: "True to size", large: "Runs large" };
+  function initProductReviews(p) {
+    const list = $("#rv-list"), panel = $("#rv-panel"), scrim = $("#rv-scrim"), chip = $("#rv-chip");
+    if (!list || !panel) return;
+    const WORDS = ["", "Not for me", "Okay", "Good", "Really good", "Love it"];
+    const mine = () => { try { return (JSON.parse(localStorage.getItem("unorgnl-my-reviews")) || []).filter((r) => r.slug === p.slug); } catch (e) { return []; } };
+    let live = [];
+    const render = () => {
+      const all = [...mine().map((r) => ({ ...r, mine: true })), ...live, ...(D.reviews || []).filter((r) => r.slug === p.slug)];
+      const rated = all.filter((r) => r.rating);
+      const avg = rated.length ? rated.reduce((a, r) => a + r.rating, 0) / rated.length : 0;
+      const fits = all.filter((r) => r.fit), fitTrue = fits.filter((r) => r.fit === "true").length;
+      // the small chip under the price
+      chip.innerHTML = all.length
+        ? `${stars(Math.round(avg))}<b>${avg.toFixed(1)}</b><span>${all.length} ${all.length === 1 ? "review" : "reviews"}</span>`
+        : `<span class="rv-empty-star" aria-hidden="true">☆</span><span>Write the first review</span>`;
+      // a one-line quote from the newest review, also opens the panel
+      const teaser = $("#rv-teaser"), top = all.find((r) => (r.quote || r.text));
+      if (teaser) {
+        teaser.hidden = !top;
+        if (top) { const q = (top.quote || top.text).trim(); teaser.innerHTML = `<q>${esc(q.length > 70 ? q.slice(0, 68).trim() + "…" : q)}</q><span>${esc(top.name || "Customer")}</span>`; teaser.setAttribute("aria-label", `Review from ${top.name || "a customer"}: ${q}. Open reviews`); }
+      }
+      chip.setAttribute("aria-label", all.length ? `Rated ${avg.toFixed(1)} out of 5 from ${all.length} reviews. Open reviews` : "No reviews yet. Write the first review");
+      $("#rv-summary").innerHTML = all.length
+        ? `<b>${avg.toFixed(1)}</b><div>${stars(Math.round(avg))}<span>${all.length} ${all.length === 1 ? "review" : "reviews"}${fits.length >= 2 ? ` · ${Math.round((fitTrue / fits.length) * 100)}% say true to size` : ""}</span></div>`
+        : `<div><span>No reviews yet for the ${esc(p.name)}.</span></div>`;
+      list.innerHTML = all.map((r, i) => `<article class="rv-item${r.mine ? " is-mine" : ""}" style="--d:${i * 50}ms">
+          <div class="rv-top">${stars(r.rating || 5)}<span class="rv-who"><b>${esc(r.name || "Customer")}</b>${r.detail || r.city ? ` · ${esc(r.detail || r.city)}` : ""}</span>${r.sample ? '<span class="rv-tag">Sample</span>' : ""}</div>
+          <p class="rv-text">${esc(r.quote || r.text || "")}</p>
+          ${(r.photos || []).length ? `<div class="rv-pics">${r.photos.map((src, k) => `<button type="button" class="rv-pic" data-pic="${i}:${k}" aria-label="Open photo ${k + 1} from ${esc(r.name)}"><img src="${esc(src)}" alt="Photo from ${esc(r.name)}" loading="lazy"></button>`).join("")}</div>` : ""}
+          <p class="rv-meta">${r.size ? `Bought ${esc(r.size)}` : ""}${r.size && r.fit ? " · " : ""}${r.fit ? FIT[r.fit] || "" : ""}${r.mine ? `<span class="rv-mine">Only you can see this. In the live shop, reviews appear after the shop checks them.</span>` : ""}</p>
+        </article>`).join("");
+      list._all = all;
+    };
+    render();
+    const url = (D.backend || {}).ordersUrl;
+    if (url) fetch(`${url}?action=reviews&slug=${encodeURIComponent(p.slug)}`).then((r) => r.json()).then((r) => { if (r.ok) { live = r.reviews || []; render(); } }).catch(() => {});
+
+    // open / close the panel
+    let lastFocus = null;
+    const open = () => {
+      lastFocus = document.activeElement;
+      panel.hidden = false; scrim.hidden = false;
+      requestAnimationFrame(() => { panel.classList.add("open"); scrim.classList.add("open"); list.classList.add("in"); });
+      document.body.style.overflow = "hidden";
+      setTimeout(() => panel.focus(), 60);
+    };
+    const close = () => {
+      panel.classList.remove("open"); scrim.classList.remove("open"); list.classList.remove("in");
+      document.body.style.overflow = "";
+      setTimeout(() => { panel.hidden = true; scrim.hidden = true; }, 380);
+      if (lastFocus) lastFocus.focus();
+    };
+    chip.addEventListener("click", open);
+    if ($("#rv-teaser")) $("#rv-teaser").addEventListener("click", open);
+    // a link ending in #reviews opens the panel straight away
+    if (location.hash === "#reviews") setTimeout(open, 400);
+    scrim.addEventListener("click", close);
+    panel.addEventListener("click", (e) => { if (e.target.closest("[data-rv-close]")) close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && panel.classList.contains("open") && !$(".modal").classList.contains("open")) close(); });
+
+    // photo lightbox
+    list.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pic]"); if (!b) return;
+      const [i, k] = b.dataset.pic.split(":").map(Number), r = list._all[i];
+      $(".modal-card").innerHTML = `<img class="rv-big" src="${esc(r.photos[k])}" alt="Photo from ${esc(r.name)}"><p class="muted" style="margin:10px 0 14px">${esc(r.name)}${r.size ? ` · Bought ${esc(r.size)}` : ""}</p><button class="btn btn-ink btn-block" type="button" data-close-modal>Close</button>`;
+      $(".modal").classList.add("open");
+    });
+
+    // write: one tap on a star starts it, the rest unfolds
+    const form = $("#rv-form"), err = $("#rv-error"), photos = [];
+    const starsBox = $(".rv-stars-input", form);
+    starsBox.innerHTML = [5, 4, 3, 2, 1].map((n) => `<label><input type="radio" name="rating" value="${n}"><span aria-hidden="true">★</span><b class="sr">${n} star${n > 1 ? "s" : ""}</b></label>`).join("");
+    $("#rv-size").innerHTML = (D.sizes[p.type] || ["One size"]).map((z) => `<option>${esc(z)}</option>`).join("");
+    starsBox.addEventListener("change", (e) => {
+      const n = +e.target.value;
+      $(".rv-word", form).textContent = WORDS[n];
+      const lab = e.target.closest("label"); lab.classList.remove("pop"); void lab.offsetWidth; lab.classList.add("pop");
+      if (!form.classList.contains("rated")) { form.classList.add("rated"); $("#rv-ask").textContent = "Thanks. Tell us a little more."; setTimeout(() => form.elements.name.focus({ preventScroll: true }), 350); }
+    });
+    const reset = () => { form.reset(); form.classList.remove("rated", "posted"); photos.length = 0; paintPhotos(); $(".rv-word", form).textContent = ""; $("#rv-ask").textContent = "Own it? Tap a star to rate it."; err.textContent = ""; };
+    $("#rv-cancel").addEventListener("click", reset);
+    const shrink = (file) => new Promise((resolve, reject) => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => { const k = Math.min(1, 1280 / Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); resolve(c.toDataURL("image/jpeg", 0.82)); };
+      img.onerror = () => { URL.revokeObjectURL(u); reject(new Error("not an image")); };
+      img.src = u;
+    });
+    const paintPhotos = () => {
+      $$(".rv-thumb", form).forEach((n) => n.remove());
+      photos.forEach((src, i) => $(".rv-add", form).insertAdjacentHTML("beforebegin", `<span class="rv-thumb"><img src="${src}" alt=""><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button></span>`));
+      $(".rv-add", form).hidden = photos.length >= 3;
+      $(".rv-photo-hint", form).textContent = photos.length ? `${photos.length} of 3` : "Add up to 3 photos";
+    };
+    $("#rv-file").addEventListener("change", async (e) => {
+      err.textContent = "";
+      for (const f of [...e.target.files].slice(0, 3 - photos.length)) {
+        if (!/^image\//.test(f.type)) { err.textContent = "Photos only, please."; continue; }
+        try { photos.push(await shrink(f)); } catch (x) { err.textContent = "That photo couldn't be read. Try another one."; }
+      }
+      e.target.value = ""; paintPhotos();
+    });
+    form.addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (b) { photos.splice(+b.dataset.rm, 1); paintPhotos(); } });
+    form.addEventListener("submit", (e) => {
+      e.preventDefault(); err.textContent = "";
+      const f = form.elements;
+      if (!f.rating.value) { err.textContent = "Tap a star first."; return; }
+      if (f.name.value.trim().length < 2) { err.textContent = "Add your name."; f.name.focus(); return; }
+      if (f.text.value.trim().length < 10) { err.textContent = "A few more words, please (10 characters or more)."; f.text.focus(); return; }
+      if (!f.consent.checked) { err.textContent = "Tick the box so we can show your review."; return; }
+      const review = { type: "review", hp: f.hp.value, slug: p.slug, name: f.name.value.trim(), city: f.city.value.trim(), rating: +f.rating.value, size: f.size.value, fit: f.fit.value, text: f.text.value.trim(), photos: photos.slice() };
+      const btn = $(".rv-post", form); btn.disabled = true; $(".rv-post-label", btn).textContent = "Posting…";
+      const done = (ok, msg) => {
+        btn.disabled = false; $(".rv-post-label", btn).textContent = "Post review";
+        if (!ok) { err.textContent = msg; return; }
+        // the button becomes a tick, then the form folds away
+        form.classList.add("posted"); $(".rv-post-label", btn).textContent = "Thanks!";
+        setTimeout(() => { reset(); $("#rv-ask").textContent = msg; }, 1400);
+      };
+      if (!url) {
+        try { const all = JSON.parse(localStorage.getItem("unorgnl-my-reviews")) || []; all.unshift({ ...review, detail: review.city, quote: review.text }); localStorage.setItem("unorgnl-my-reviews", JSON.stringify(all.slice(0, 20))); } catch (x) { /* storage blocked */ }
+        setTimeout(() => { render(); done(true, "Saved on this device. (Demo mode)"); }, 500);
+        return;
+      }
+      fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(review) })
+        .then((r) => r.json()).then((r) => done(r.ok, r.ok ? "Thanks! It'll show once we've checked it." : "That didn't go through. Try again in a moment."))
+        .catch(() => done(false, "Couldn't reach the shop. Check your connection and try again."));
+    });
+  }
+
   /* ---------- THE INDEX (big name list with a cursor preview) ---------- */
   function initIndex(currentSlug) {
     const list = $("#index-list"); if (!list) return;
@@ -1145,6 +1314,9 @@
     initCards($("#pairs"));
     initFly($("#pairs"));
     initIndex(p.slug);
+    initProductReviews(p);
+    initArrival();
+    initPairUp(p);
     paint();
 
     // views: 01 collar close-up -> 02 full front -> 03 turn to back -> 04 detail
