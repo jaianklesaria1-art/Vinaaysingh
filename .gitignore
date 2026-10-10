@@ -1,0 +1,14 @@
+# private: invoices, bank details, signature
+Invoice-*.pdf
+invoice-*.html
+gpay-qr*
+signature.png
+# local only
+backups/
+references/
+site-v1-orla-falcon/
+site/images/src/
+site/images/cut/
+*.zip
+.DS_Store
+Thumbs.db
