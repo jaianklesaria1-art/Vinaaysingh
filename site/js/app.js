@@ -77,7 +77,7 @@
       <a href="index.html">${logo}</a>
       <nav id="site-nav" aria-label="Main">
         <a href="index.html#collection">Shop</a>
-        <a href="index.html#fit">Build a fit</a>
+        <a href="fit.html">Build a fit</a>
       </nav>
       <div class="head-right">
         <span class="progress" aria-hidden="true">(0%)</span>
@@ -143,7 +143,7 @@
       footer.className = "site-footer";
       footer.innerHTML = `
         <div><a href="index.html">${logo}</a><p class="muted" style="margin-top:12px;max-width:320px">Nothing is original. Inspired by you.</p></div>
-        <div><h4>Shop</h4><ul><li><a href="index.html#collection">All pieces</a></li><li><a href="index.html#lookbook">Lookbook</a></li><li><a href="index.html#fit">Build a fit</a></li></ul></div>
+        <div><h4>Shop</h4><ul><li><a href="index.html#collection">All pieces</a></li><li><a href="index.html#lookbook">Lookbook</a></li><li><a href="fit.html">Build a fit</a></li></ul></div>
         <div><h4>Help</h4><ul><li><a href="track.html">Track your order</a></li><li><a href="shipping.html">Shipping</a></li><li><a href="returns.html">Returns &amp; refunds</a></li><li><a href="index.html#faq">FAQ</a></li></ul></div>
         <div><h4>About</h4><ul><li><a href="contact.html">Contact us</a></li><li><a href="privacy.html">Privacy policy</a></li><li><a href="terms.html">Terms of use</a></li></ul></div>
         <div><h4>Social</h4><ul><li>Instagram</li><li>WhatsApp</li></ul></div>
@@ -818,6 +818,7 @@
     wavyBlock($(".cats > div"), [$(".cats > div > .mono"), ...$$("li", list)], isSmall() ? { baseOffsetFactor: 0.12, baseAmplitude: 70 } : {});
 
     initFit();
+    if ($("#ft-top")) { $("#ft-top").innerHTML = art(bySlug("supercharge-power-boy-tee")); $("#ft-bottom").innerHTML = art(bySlug("second-draft-cargo")); }
     initLookbook();
     initUgc();
     initFaq();
@@ -866,8 +867,7 @@
     grid.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-try-look]"); if (!btn) return;
       const l = LOOKS[+btn.dataset.tryLook];
-      document.dispatchEvent(new CustomEvent("fit:set", { detail: { top: l.top, bottom: l.bottom } }));
-      $("#fit").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      location.href = `fit.html?top=${encodeURIComponent(l.top)}&bottom=${encodeURIComponent(l.bottom)}`;
     });
   }
 
@@ -950,6 +950,29 @@
     window.addEventListener("scroll", kick, { passive: true });
     window.addEventListener("resize", kick);
     target = current = progress(); paint(current);
+  }
+
+  /* ---------- the fitting room page: looks to start from, and ?top=&bottom= from the lookbook ---------- */
+  function initFitPage() {
+    initFit();
+    const row = $("#fp-looks");
+    if (row) {
+      row.innerHTML = LOOKS.map((l, i) => { const t = bySlug(l.top), b = bySlug(l.bottom);
+        return `<button class="fp-look" type="button" data-look="${i}" style="--tone:${tone(t)}"><span class="fp-look-img">${art(t)}${art(b)}</span><span>${esc(l.name)}</span></button>`; }).join("");
+      row.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-look]"); if (!b) return;
+        const l = LOOKS[+b.dataset.look];
+        $$(".fp-look", row).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        document.dispatchEvent(new CustomEvent("fit:set", { detail: { top: l.top, bottom: l.bottom } }));
+      });
+    }
+    const q = new URLSearchParams(location.search);
+    if (q.get("top") || q.get("bottom")) {
+      setTimeout(() => document.dispatchEvent(new CustomEvent("fit:set", { detail: { top: q.get("top"), bottom: q.get("bottom") } })), 60);
+      const i = LOOKS.findIndex((l) => l.top === q.get("top") && l.bottom === q.get("bottom"));
+      if (i >= 0 && row) $$(".fp-look", row)[i].setAttribute("aria-pressed", "true");
+    }
+    $$(".site-header nav a").forEach((a) => { if (a.getAttribute("href") === "fit.html") a.setAttribute("aria-current", "page"); });
   }
 
   /* ---------- Build your fit: rails, a mirror you can turn, a swing tag ---------- */
@@ -1505,6 +1528,7 @@
   if (page === "home") initHome();
   if (page === "product") initProduct();
   if (page === "track") initTrack();
+  if (page === "fit") initFitPage();
   initReveal();
   upgradeAll();
 })();
