@@ -1239,16 +1239,39 @@
   /* ---------- THE INDEX (big name list with a cursor preview) ---------- */
   function initIndex(currentSlug) {
     const list = $("#index-list"); if (!list) return;
+    // each row carries a small thumbnail (shown on touch screens, where there is no hover)
     list.innerHTML = D.products.map((p, i) => `<li><a href="product.html?p=${p.slug}" data-peek="${p.slug}" ${p.slug === currentSlug ? 'aria-current="page"' : ""}>
-      <span class="mono">[${String(i + 1).padStart(2, "0")}]</span><span class="name">${esc(p.name)}</span><span class="idx-price">${fmt(p.price)}</span></a></li>`).join("");
+      <span class="mono">[${String(i + 1).padStart(2, "0")}]</span><span class="idx-thumb" style="--tone:${tone(p)}" aria-hidden="true">${art(p)}</span><span class="name">${esc(p.name)}</span><span class="idx-price">${fmt(p.price)}</span></a></li>`).join("");
     const peek = $(".index-peek");
-    list.addEventListener("mouseover", (e) => {
+    if (!peek || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    // desktop: the preview sits beside the cursor (never over the name) and glides after it
+    let tx = 0, ty = 0, x = 0, y = 0, raf = 0, shown = "", minX = 0;   // minX: just past the hovered name, so the preview never covers it
+    const place = () => {
+      const w = peek.offsetWidth || 260, h = peek.offsetHeight || 325;
+      const nx = Math.min(innerWidth - w - 16, Math.max(tx + 32, minX)), ny = Math.min(innerHeight - h - 16, Math.max(16, ty - h / 2));
+      x += (nx - x) * 0.22; y += (ny - y) * 0.22;
+      peek.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+      raf = Math.abs(nx - x) + Math.abs(ny - y) > 0.5 ? requestAnimationFrame(place) : 0;
+    };
+    const showFor = (a, cx, cy) => {
+      // measure where the name text actually ends (the element itself stretches across the row)
+      const nm = $(".name", a); if (nm) { const rg = document.createRange(); rg.selectNodeContents(nm); minX = rg.getBoundingClientRect().right + 28; } else minX = 0;
+      if (a.dataset.peek !== shown) { shown = a.dataset.peek; peek.innerHTML = art(bySlug(shown)); }
+      if (!peek.classList.contains("show")) { tx = cx; ty = cy; const w = peek.offsetWidth || 260, h = peek.offsetHeight || 325; x = Math.min(innerWidth - w - 16, Math.max(cx + 32, minX)); y = Math.min(innerHeight - h - 16, Math.max(16, cy - h / 2)); peek.style.transform = `translate(${x}px, ${y}px)`; }
+      peek.classList.add("show");
+    };
+    list.addEventListener("mousemove", (e) => {
       const a = e.target.closest("[data-peek]"); if (!a) return;
-      peek.innerHTML = art(bySlug(a.dataset.peek)); peek.classList.add("show");
+      showFor(a, e.clientX, e.clientY); tx = e.clientX; ty = e.clientY;
+      if (!raf) raf = requestAnimationFrame(place);
     });
     list.addEventListener("mouseleave", () => peek.classList.remove("show"));
-    window.addEventListener("mousemove", (e) => { peek.style.left = e.clientX + 160 + "px"; peek.style.top = e.clientY + "px"; }, { passive: true });
+    window.addEventListener("scroll", () => peek.classList.remove("show"), { passive: true });
+    // keyboard: tabbing to a name shows its preview next to the row
+    list.addEventListener("focusin", (e) => { const a = e.target.closest("[data-peek]"); if (!a) return; const r = a.getBoundingClientRect(); showFor(a, r.left + Math.min(r.width * 0.55, 520), r.top + r.height / 2); });
+    list.addEventListener("focusout", () => peek.classList.remove("show"));
   }
+
 
   /* ---------- PRODUCT (W-store scroll journey) ---------- */
   function initProduct() {

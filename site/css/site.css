@@ -1419,3 +1419,16 @@ img.garment.photo { width: 100%; height: auto; aspect-ratio: 1600 / 1760; object
   .sticky-buy { transform: translateY(140%); transition: transform .35s var(--ease); }
   .sticky-buy.show { transform: none; }
 }
+
+/* the index: preview beside the cursor on desktop, inline thumbnails on touch */
+.index-peek { left: 0; top: 0; transform: none; transition: opacity .2s; }
+.index-peek > * { transition: transform .35s var(--ease); }
+.index-peek.show { transform: none; }
+.index-peek { rotate: -3deg; scale: .9; transition: opacity .2s, scale .3s var(--ease); }
+.index-peek.show { scale: 1; }
+.idx-thumb { display: none; }
+@media (hover: none), (pointer: coarse), (max-width: 960px) {
+  .idx-thumb { display: grid; flex: none; width: 52px; height: 52px; border-radius: 12px; background: var(--tone); place-items: end center; overflow: hidden; border: 1px solid rgba(17,17,17,.15); }
+  .idx-thumb .garment { width: 84%; }
+  .index-list a { align-items: center; }
+}
