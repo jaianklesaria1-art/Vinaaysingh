@@ -9,6 +9,8 @@
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   // drape a garment as simulated cloth (js/cloth.js); the plain image stays as the fallback
   const cloth = (el, o) => (window.UNOCloth ? window.UNOCloth.mount(el, o) : null);
+  // phones and touch screens: product cards use plain photos (no live cloth) to keep scrolling smooth
+  const lightCards = window.matchMedia("(max-width: 960px), (pointer: coarse)").matches;
   const fmt = (n) => D.currency + n.toLocaleString("en-IN");
   const bySlug = (slug) => D.products.find((p) => p.slug === slug);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -623,7 +625,7 @@
 
   function initCards(root) {
     if (!root || root.dataset.cards) return; root.dataset.cards = "1";
-    $$(".still", root).forEach((el) => cloth(el, { strength: 0.9 }));
+    if (!lightCards) $$(".still", root).forEach((el) => cloth(el, { strength: 0.9 }));
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     // colour dots recolour the card
     root.addEventListener("click", (e) => {
@@ -641,7 +643,7 @@
       const card = dot.closest(".pcard"); const p = bySlug(card.dataset.slug);
       $$("[data-dot]", card).forEach((b) => b.setAttribute("aria-pressed", String(b === dot)));
       $(".still", card).innerHTML = art(p, p.colors[+dot.dataset.dot]);
-      cloth($(".still", card), { strength: 0.9 });
+      if (!lightCards) cloth($(".still", card), { strength: 0.9 });
     });
     if (fine && !reduceMotion) {
       root.addEventListener("pointermove", (e) => {
@@ -899,7 +901,7 @@
 
   /* ---------- hero runway, driven by scroll: once the hero is fully open, the tee steps off,
      then three models walk on one after another as you scroll, then the page moves on ---------- */
-  const RUNWAY_LEN = 4.8;                       // extra screen-heights of scroll the hero holds for the show
+  const RUNWAY_LEN = window.matchMedia("(max-width: 960px)").matches ? 2.6 : 4.8;   // shorter show on phones                       // extra screen-heights of scroll the hero holds for the show
   function initRunway() {
     const hero = $(".sx-hero"), runway = $(".runway"), model = $(".runway .model"), tag = $(".runway-tag"), figure = $("#hero-figure");
     if (!hero || !runway || reduceMotion) return;
@@ -1328,6 +1330,11 @@
     initProductReviews(p);
     initArrival();
     initPairUp(p);
+    // phones: the sticky "Add to bag" bar only shows once the main button has scrolled out of view
+    const mainAdd = $(".pdp2-right [data-add]"), sticky = $(".sticky-buy");
+    if (mainAdd && sticky && "IntersectionObserver" in window) {
+      new IntersectionObserver(([en]) => sticky.classList.toggle("show", !en.isIntersecting && en.boundingClientRect.top < 0), { threshold: 0 }).observe(mainAdd);
+    }
     paint();
 
     // views: 01 collar close-up -> 02 full front -> 03 turn to back -> 04 detail

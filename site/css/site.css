@@ -1367,3 +1367,55 @@ img.garment.photo { width: 100%; height: auto; aspect-ratio: 1600 / 1760; object
 @keyframes slidein-l { from { transform: translateX(14%); opacity: 0; } } @keyframes slidein-r { from { transform: translateX(-14%); opacity: 0; } }
 @media (hover: none) { .pc-arrow { opacity: 1; transform: none; width: 30px; height: 30px; margin-top: -15px; } }
 @media (prefers-reduced-motion: reduce) { .still.slide-l, .still.slide-r { animation: none; } }
+
+/* ===================== NARROW PHONES (380px and up) ===================== */
+@media (max-width: 960px) {
+  /* columns that are allowed to shrink, so a long name can't push a card off the screen */
+  .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pcard, .pcard-body, .pcard-row { min-width: 0; }
+  .pcard-body h3 { overflow-wrap: anywhere; }
+}
+@media (max-width: 520px) {
+  .collection { padding-left: 12px; padding-right: 12px; }
+  .pgrid { gap: 28px 10px; }
+  .pcard { border-radius: 18px; }
+  .pcard-stage { border-radius: 16px 16px 0 0; }
+  .pcard-top { top: 8px; left: 8px; right: 8px; }
+  .pcard-top .cat { font-size: 9px; padding: 2px 7px; }
+  .pcard-top .price { font-size: 16px; padding: 0 8px; }
+  .pcard-figure { left: 9%; right: 9%; }
+  .pcard-body { padding: 10px; gap: 8px; }
+  .pcard-body h3 { font-size: 17px; line-height: 1; }
+  .pcard-row { gap: 6px; }
+  .dots { gap: 4px; }
+  .dots button { width: 15px; height: 15px; }
+  .btn-mini { height: 30px; padding: 0 11px; font-size: 13px; }
+  .heart { width: 30px; height: 30px; }
+  .pc-arrow { width: 26px; height: 26px; margin-top: -13px; }
+  .pc-arrow.prev { left: 6px; } .pc-arrow.next { right: 6px; }
+  .pc-arrow svg { width: 12px; height: 12px; }
+  /* section paddings a touch tighter so content gets the width */
+  .lookbook, .ugc, .faq, .fit, .benefits, .statement, .cats { padding-left: 14px; padding-right: 14px; }
+  .search-results ul { grid-template-columns: 1fr; }
+}
+
+/* phones: use the visible viewport height (address bar safe) for the sticky hero */
+@supports (height: 100svh) {
+  .sx { height: calc(100svh * var(--sx-len)); }
+  .sx-stage { height: 100svh; }
+}
+@media (max-width: 520px) {
+  /* desktop spacing is too airy on a phone: tighter rhythm between sections */
+  .statement { padding-top: 56px; padding-bottom: 44px; }
+  .cats { padding-top: 40px; padding-bottom: 48px; gap: 28px; }
+  .collection, .lookbook, .fit, .ugc, .faq { padding-top: 64px; padding-bottom: 56px; }
+  .benefits { padding-top: 64px; padding-bottom: 56px; }
+  .col-head { margin-bottom: 16px; }
+  .filters { margin-bottom: 28px; }
+  .statement p.display { font-size: 30px; }
+}
+
+@media (max-width: 960px) {
+  .sticky-buy { transform: translateY(140%); transition: transform .35s var(--ease); }
+  .sticky-buy.show { transform: none; }
+}

@@ -189,10 +189,12 @@
       [f.a, f.b, f.c].forEach((v) => { const d = new THREE.Vector3().fromBufferAttribute(pos, v).applyMatrix4(this.mesh.matrixWorld).distanceTo(h.point); if (d < bd) { bd = d; best = v; } });
       return best >= GX + 1 ? { i: best, point: h.point.clone() } : null;   // the pinned shoulder row can't be grabbed
     };
-    area.style.touchAction = "none";
+    // touch screens: a vertical swipe always scrolls the page; a sideways swipe turns the garment; pulling is mouse-only
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    area.style.touchAction = coarse ? "pan-y" : "none";
     area.addEventListener("pointerdown", (e) => {
       if (id !== null || !this.mesh || e.target.closest("button, a, input, select, label")) return;
-      const f = onFabric(e);
+      const f = e.pointerType === "touch" ? null : onFabric(e);
       id = e.pointerId; lastX = e.clientX;
       try { area.setPointerCapture(id); } catch (err) { /* ignore */ }
       if (f) {
